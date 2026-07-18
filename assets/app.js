@@ -4,7 +4,10 @@ const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const RING_CIRCUMFERENCE = 2 * Math.PI * 96;
 const PALETTE = ["cat-0", "cat-1", "cat-2", "cat-3", "cat-4", "cat-5", "cat-6"];
 const STORAGE_KEY = "timecalc:v1";
+const BACKUP_APP_ID = "timecalc";
+const BACKUP_VERSION = 1;
 const DEFAULT_SETTINGS = { studyBlockHours: 2, shiftBlockHours: 8, chartType: "bar" };
+const CHART_TYPES = ["bar", "pie", "pictogram"];
 
 // ---------- state ----------
 // each category: { id, name, colorVar, weekly, daily: [7 numbers], custom: bool }
@@ -96,6 +99,10 @@ const editPanel = document.getElementById("edit-panel");
 const studyBlockInput = document.getElementById("study-block-input");
 const shiftBlockInput = document.getElementById("shift-block-input");
 const resetBtn = document.getElementById("reset-defaults");
+const exportBtn = document.getElementById("export-backup");
+const importBtn = document.getElementById("import-backup");
+const importFileInput = document.getElementById("import-file-input");
+const importStatus = document.getElementById("import-status");
 
 // ---------- day header (detailed mode) ----------
 DAYS.forEach((d) => {
@@ -596,6 +603,166 @@ function wireCopyEditing() {
     });
   });
 }
+
+// ---------- backup export / import ----------
+function buildBackupPayload() {
+  return {
+    app: BACKUP_APP_ID,
+    version: BACKUP_VERSION,
+    exportedAt: new Date().toISOString(),
+    categories: categories.map((c) => ({
+      id: c.id,
+      name: c.name,
+      colorVar: c.colorVar,
+      weekly: c.weekly,
+      daily: c.daily,
+      custom: c.custom,
+    })),
+    mode,
+    settings,
+    copyOverrides,
+  };
+}
+
+function showImportStatus(message, isError) {
+  importStatus.textContent = message;
+  importStatus.classList.toggle("is-error", isError);
+  clearTimeout(showImportStatus._timer);
+  showImportStatus._timer = setTimeout(() => {
+    importStatus.textContent = "";
+  }, 5000);
+}
+
+// Validates and sanitizes an arbitrary parsed JSON value into safe app
+// state. Throws only when the file has no usable category list; every
+// other field falls back to a safe default instead of failing the whole
+// import, so a partially-edited backup still restores what it can.
+function validateBackup(data) {
+  if (!data || typeof data !== "object") {
+    throw new Error("File is not a valid backup (not an object).");
+  }
+  if (!Array.isArray(data.categories) || data.categories.length === 0) {
+    throw new Error("File is not a valid backup (no categories found).");
+  }
+
+  const seenIds = new Set();
+  const cleanCategories = data.categories.map((c, i) => {
+    if (!c || typeof c !== "object") {
+      throw new Error(`Category #${i + 1} in the file is malformed.`);
+    }
+    const name = typeof c.name === "string" ? c.name.trim().slice(0, 60) : "";
+    if (!name) {
+      throw new Error(`Category #${i + 1} in the file is missing a name.`);
+    }
+    const weekly = clamp(Number(c.weekly) || 0, 0, 168);
+    const daily =
+      Array.isArray(c.daily) && c.daily.length === 7
+        ? c.daily.map((d) => clamp(Number(d) || 0, 0, 24))
+        : splitEvenly(weekly);
+    const colorVar = PALETTE.includes(c.colorVar) ? c.colorVar : PALETTE[i % PALETTE.length];
+    let id = typeof c.id === "string" && c.id.trim() ? c.id.trim() : `imported-${Date.now()}-${i}`;
+    while (seenIds.has(id)) id = `${id}-${i}`;
+    seenIds.add(id);
+    return mkCategory(id, name, colorVar, weekly, !!c.custom, daily);
+  });
+
+  const cleanSettings = { ...DEFAULT_SETTINGS };
+  if (data.settings && typeof data.settings === "object") {
+    if (Number.isFinite(Number(data.settings.studyBlockHours))) {
+      cleanSettings.studyBlockHours = clamp(Number(data.settings.studyBlockHours), 0.5, 24);
+    }
+    if (Number.isFinite(Number(data.settings.shiftBlockHours))) {
+      cleanSettings.shiftBlockHours = clamp(Number(data.settings.shiftBlockHours), 0.5, 24);
+    }
+    if (CHART_TYPES.includes(data.settings.chartType)) {
+      cleanSettings.chartType = data.settings.chartType;
+    }
+  }
+
+  // Only known copy keys (the data-copy-key elements actually on this page)
+  // are accepted, and only string values, so an edited/malicious file can't
+  // inject arbitrary keys or non-text content.
+  const cleanCopy = {};
+  if (data.copyOverrides && typeof data.copyOverrides === "object") {
+    Object.keys(ORIGINAL_COPY).forEach((key) => {
+      if (typeof data.copyOverrides[key] === "string") {
+        cleanCopy[key] = data.copyOverrides[key].slice(0, 2000);
+      }
+    });
+  }
+
+  const cleanMode = data.mode === "detailed" ? "detailed" : "quick";
+
+  return { categories: cleanCategories, settings: cleanSettings, copyOverrides: cleanCopy, mode: cleanMode };
+}
+
+function applyBackup(rawData) {
+  const clean = validateBackup(rawData);
+
+  categories = clean.categories;
+  settings = clean.settings;
+  copyOverrides = clean.copyOverrides;
+  mode = clean.mode;
+
+  document.querySelectorAll("[data-copy-key]").forEach((el) => {
+    const key = el.dataset.copyKey;
+    el.textContent = Object.prototype.hasOwnProperty.call(copyOverrides, key)
+      ? copyOverrides[key]
+      : ORIGINAL_COPY[key];
+  });
+
+  studyBlockInput.value = settings.studyBlockHours;
+  shiftBlockInput.value = settings.shiftBlockHours;
+  updateInsightLabels();
+
+  document.querySelectorAll(".chart-toggle__btn").forEach((b) => {
+    const active = b.dataset.chart === settings.chartType;
+    b.classList.toggle("is-active", active);
+    b.setAttribute("aria-selected", active ? "true" : "false");
+  });
+
+  setModeUI();
+  recalc();
+  saveState();
+}
+
+exportBtn.addEventListener("click", () => {
+  const payload = buildBackupPayload();
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `168-calculator-backup-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showImportStatus("Backup downloaded.", false);
+});
+
+importBtn.addEventListener("click", () => importFileInput.click());
+
+importFileInput.addEventListener("change", () => {
+  const file = importFileInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(String(reader.result));
+      applyBackup(data);
+      showImportStatus("Backup imported.", false);
+    } catch (e) {
+      showImportStatus(e.message || "That file isn't a valid backup.", true);
+    }
+    importFileInput.value = "";
+  };
+  reader.onerror = () => {
+    showImportStatus("Could not read that file.", true);
+    importFileInput.value = "";
+  };
+  reader.readAsText(file);
+});
 
 // ---------- reset to defaults ----------
 resetBtn.addEventListener("click", () => {

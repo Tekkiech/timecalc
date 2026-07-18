@@ -258,6 +258,34 @@ body.edit-mode [data-copy-key]:focus {
 }
 .edit-panel__reset:hover { background: rgba(255, 107, 93, 0.12); }
 
+.edit-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(200, 255, 77, 0.15);
+}
+
+.edit-panel__btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--fg-dim);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  transition: border-color 0.2s, color 0.2s;
+}
+.edit-panel__btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.edit-panel__status {
+  font-size: 0.78rem;
+  color: var(--accent);
+}
+.edit-panel__status.is-error { color: var(--warn); }
+
 .mode-toggle {
   display: inline-flex;
   background: var(--bg-elev);

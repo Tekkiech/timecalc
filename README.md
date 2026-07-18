@@ -24,6 +24,10 @@ saves only to your own browser's local storage — nothing is sent anywhere.
 - **Persistence** — every edit (categories, colors, order, copy, chart
   choice, settings) is saved to `localStorage` automatically, with a
   one-click "reset everything to defaults."
+- **Backup / restore** — export your whole setup as a `.json` file and
+  import it back later or on another device. Imported files are validated
+  and sanitized field-by-field, so a malformed or hand-edited file can't
+  corrupt the app.
 - Dark, editorial visual style with GSAP scroll/entrance animations and a
   Three.js ambient background (168 points on a sphere — one per hour).
 
