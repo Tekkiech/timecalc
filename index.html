@@ -53,8 +53,8 @@
 
     <div class="edit-panel reveal" id="edit-panel" hidden>
       <p class="edit-panel__hint">
-        Edit mode is on — rename, recolor, drag to reorder, or remove any
-        category below. Changes save to this browser automatically.
+        Edit mode is on — rename, recolor, reorder with the arrows, or
+        remove any category below. Changes save to this browser automatically.
       </p>
       <div class="edit-panel__settings">
         <label class="edit-panel__field">
@@ -88,7 +88,7 @@
         <table class="detailed-table" id="detailed-table">
           <thead>
             <tr>
-              <th scope="col" class="detailed-table__drag"></th>
+              <th scope="col" class="detailed-table__reorder"></th>
               <th scope="col" class="detailed-table__cat">Category</th>
               <!-- day headers injected -->
             </tr>
@@ -164,7 +164,10 @@
 
 <template id="category-row-template">
   <div class="category-card">
-    <button class="category-card__drag" type="button" aria-label="Drag to reorder" tabindex="-1" data-drag-handle>⠿</button>
+    <div class="category-card__reorder">
+      <button class="category-card__move" type="button" data-dir="up" aria-label="Move up">▲</button>
+      <button class="category-card__move" type="button" data-dir="down" aria-label="Move down">▼</button>
+    </div>
     <button class="category-card__swatch" type="button" aria-label="Change color" tabindex="-1"></button>
     <input class="category-card__name" type="text" readonly aria-label="Category name" />
     <div class="category-card__input-wrap">

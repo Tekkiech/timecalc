@@ -120,42 +120,28 @@ removeTh.scope = "col";
 removeTh.textContent = "";
 detailedHeadRow.appendChild(removeTh);
 
-// ---------- drag & drop reorder ----------
-function wireDragAndDrop(items, getId) {
-  items.forEach((item) => {
-    const handle = item.querySelector("[data-drag-handle]");
-    if (handle) {
-      handle.draggable = true;
-      handle.addEventListener("dragstart", (e) => {
-        e.dataTransfer.setData("text/plain", getId(item));
-        e.dataTransfer.effectAllowed = "move";
-      });
-    }
-    item.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      item.classList.add("is-drag-over");
-    });
-    item.addEventListener("dragleave", () => item.classList.remove("is-drag-over"));
-    item.addEventListener("drop", (e) => {
-      e.preventDefault();
-      item.classList.remove("is-drag-over");
-      const draggedId = e.dataTransfer.getData("text/plain");
-      const targetId = getId(item);
-      if (draggedId && draggedId !== targetId) reorderCategories(draggedId, targetId);
-    });
-  });
-}
-
-function reorderCategories(draggedId, targetId) {
-  const fromIdx = categories.findIndex((c) => c.id === draggedId);
-  const toIdx = categories.findIndex((c) => c.id === targetId);
-  if (fromIdx === -1 || toIdx === -1) return;
-  const [moved] = categories.splice(fromIdx, 1);
-  categories.splice(toIdx, 0, moved);
+// ---------- reorder (up/down — works with mouse, touch, and keyboard) ----------
+function moveCategory(id, direction) {
+  const idx = categories.findIndex((c) => c.id === id);
+  if (idx === -1) return;
+  const swapWith = direction === "up" ? idx - 1 : idx + 1;
+  if (swapWith < 0 || swapWith >= categories.length) return;
+  [categories[idx], categories[swapWith]] = [categories[swapWith], categories[idx]];
   renderQuickGrid();
   renderDetailedTable();
   recalc();
   saveState();
+}
+
+function wireReorderButtons(container, selector, getId) {
+  container.querySelectorAll(selector).forEach((btn) => {
+    const item = btn.closest("[data-id]");
+    btn.disabled =
+      btn.dataset.dir === "up"
+        ? categories.findIndex((c) => c.id === getId(item)) === 0
+        : categories.findIndex((c) => c.id === getId(item)) === categories.length - 1;
+    btn.addEventListener("click", () => moveCategory(getId(item), btn.dataset.dir));
+  });
 }
 
 // ---------- color popover ----------
@@ -191,6 +177,20 @@ function openColorPopover(anchor, cat, onPick) {
 
   document.body.appendChild(pop);
   activePopover = pop;
+
+  // keep the popover on-screen near viewport edges (common on narrow phones)
+  const margin = 8;
+  const popRect = pop.getBoundingClientRect();
+  if (popRect.right > window.innerWidth - margin) {
+    pop.style.left = `${window.innerWidth - popRect.width - margin + window.scrollX}px`;
+  }
+  if (popRect.left < margin) {
+    pop.style.left = `${margin + window.scrollX}px`;
+  }
+  if (popRect.bottom > window.innerHeight - margin) {
+    pop.style.top = `${rect.top + window.scrollY - popRect.height - 6}px`;
+  }
+
   setTimeout(() => {
     document.addEventListener("click", closeActivePopover, { once: true });
   }, 0);
@@ -242,7 +242,7 @@ function renderQuickGrid() {
     quickGrid.appendChild(node);
   });
 
-  wireDragAndDrop(Array.from(quickGrid.querySelectorAll(".category-card")), (el) => el.dataset.id);
+  wireReorderButtons(quickGrid, ".category-card__move", (el) => el.dataset.id);
 }
 
 function renderDetailedTable() {
@@ -252,16 +252,26 @@ function renderDetailedTable() {
     tr.dataset.id = cat.id;
     if (cat.custom) tr.classList.add("is-custom");
 
-    const dragTd = document.createElement("td");
-    dragTd.className = "detailed-table__drag";
-    const dragBtn = document.createElement("button");
-    dragBtn.type = "button";
-    dragBtn.className = "detailed-table__drag-btn";
-    dragBtn.setAttribute("aria-label", "Drag to reorder");
-    dragBtn.setAttribute("data-drag-handle", "");
-    dragBtn.textContent = "⠿";
-    dragTd.appendChild(dragBtn);
-    tr.appendChild(dragTd);
+    const reorderTd = document.createElement("td");
+    reorderTd.className = "detailed-table__reorder";
+    const reorderGroup = document.createElement("div");
+    reorderGroup.className = "detailed-table__reorder-group";
+    const upBtn = document.createElement("button");
+    upBtn.type = "button";
+    upBtn.className = "detailed-table__reorder-btn";
+    upBtn.dataset.dir = "up";
+    upBtn.setAttribute("aria-label", "Move up");
+    upBtn.textContent = "▲";
+    const downBtn = document.createElement("button");
+    downBtn.type = "button";
+    downBtn.className = "detailed-table__reorder-btn";
+    downBtn.dataset.dir = "down";
+    downBtn.setAttribute("aria-label", "Move down");
+    downBtn.textContent = "▼";
+    reorderGroup.appendChild(upBtn);
+    reorderGroup.appendChild(downBtn);
+    reorderTd.appendChild(reorderGroup);
+    tr.appendChild(reorderTd);
 
     const catTd = document.createElement("td");
     catTd.className = "detailed-table__cat";
@@ -338,7 +348,7 @@ function renderDetailedTable() {
     detailedBody.appendChild(tr);
   });
 
-  wireDragAndDrop(Array.from(detailedBody.querySelectorAll("tr")), (el) => el.dataset.id);
+  wireReorderButtons(detailedBody, ".detailed-table__reorder-btn", (el) => el.dataset.id);
 }
 
 // ---------- day chart (bar / pie / pictogram) ----------

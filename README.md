@@ -12,9 +12,11 @@ saves only to your own browser's local storage — nothing is sent anywhere.
 
 - **Quick mode** — one weekly-hours input per category.
 - **Day-by-day mode** — a Mon–Sun grid per category for more accurate totals.
-- **Edit mode** — rename, recolor, drag-to-reorder, or remove *any* category,
-  including the defaults (Sleep, School, Work, Church, Commute), add your
-  own, and edit the page's own headline, subtext, and section copy in place.
+- **Edit mode** — rename, recolor, reorder (up/down controls, no
+  drag-and-drop, so it works the same with mouse, touch, or keyboard), or
+  remove *any* category, including the defaults (Sleep, School, Work,
+  Church, Commute), add your own, and edit the page's own headline,
+  subtext, and section copy in place.
 - **Configurable insights** — set your own study-block and shift-block
   lengths instead of the 2-hour / 8-hour defaults.
 - **Three day-breakdown views** — bar chart, pie chart, or a pictogram
@@ -30,6 +32,9 @@ saves only to your own browser's local storage — nothing is sent anywhere.
   corrupt the app.
 - Dark, editorial visual style with GSAP scroll/entrance animations and a
   Three.js ambient background (168 points on a sphere — one per hour).
+- Fully responsive, with mobile-specific care: no drag-and-drop (doesn't
+  work on touchscreens), 16px+ font on every editable field (avoids
+  iOS Safari's auto-zoom-on-focus), and touch-sized tap targets.
 
 ## Tech
 
