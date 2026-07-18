@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>168 — Free Hours Calculator</title>
+<meta name="description" content="Find out how many of your 168 weekly hours are actually free. Subtract sleep, school, work, church and commute to see time left for studying or picking up shifts." />
+
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+
+<canvas id="bg-scene" aria-hidden="true"></canvas>
+
+<header class="topbar">
+  <a href="#top" class="logo">168</a>
+  <a class="topbar__link" href="https://github.com/Tekkiech/timecalc" id="gh-link" target="_blank" rel="noopener">Source</a>
+</header>
+
+<main id="top">
+
+  <section class="hero">
+    <p class="hero__eyebrow">Weekly time, accounted for</p>
+    <h1 class="hero__title">
+      <span class="hero__num" data-count-to="168">0</span> hours
+    </h1>
+    <p class="hero__sub">
+      That's all anyone gets in a week. Subtract sleep, school, work, church and
+      commute below to see exactly how many hours are left for studying, side
+      projects, or picking up an extra shift.
+    </p>
+    <a href="#calculator" class="hero__cta">Start subtracting ↓</a>
+  </section>
+
+  <section class="calculator" id="calculator">
+
+    <div class="calc__head reveal">
+      <h2>Where does your week go?</h2>
+      <div class="mode-toggle" role="tablist" aria-label="Input mode">
+        <button class="mode-toggle__btn is-active" data-mode="quick" role="tab" aria-selected="true">Quick</button>
+        <button class="mode-toggle__btn" data-mode="detailed" role="tab" aria-selected="false">Day-by-day</button>
+      </div>
+    </div>
+
+    <!-- QUICK MODE -->
+    <div class="quick-grid reveal" id="quick-grid"></div>
+
+    <button class="add-category reveal" id="add-category-quick" type="button">+ Add a category</button>
+
+    <!-- DETAILED MODE -->
+    <div class="detailed-wrap reveal" id="detailed-wrap" hidden>
+      <div class="detailed-scroll">
+        <table class="detailed-table" id="detailed-table">
+          <thead>
+            <tr>
+              <th scope="col" class="detailed-table__cat">Category</th>
+              <!-- day headers injected -->
+            </tr>
+          </thead>
+          <tbody id="detailed-body"></tbody>
+        </table>
+      </div>
+      <button class="add-category" id="add-category-detailed" type="button">+ Add a category</button>
+    </div>
+
+    <div class="results reveal" id="results">
+      <div class="results__ring">
+        <svg viewBox="0 0 220 220" class="ring-svg" role="img" aria-label="Free hours ring">
+          <circle class="ring-track" cx="110" cy="110" r="96"></circle>
+          <circle class="ring-fill" id="ring-fill" cx="110" cy="110" r="96"></circle>
+        </svg>
+        <div class="ring-center">
+          <span class="ring-center__num" id="free-hours-num">168</span>
+          <span class="ring-center__label">free hrs / week</span>
+        </div>
+      </div>
+
+      <div class="results__stats">
+        <div class="stat">
+          <span class="stat__num" id="stat-allocated">0</span>
+          <span class="stat__label">hours committed</span>
+        </div>
+        <div class="stat">
+          <span class="stat__num" id="stat-perday">24.0</span>
+          <span class="stat__label">avg free hrs / day</span>
+        </div>
+        <div class="stat">
+          <span class="stat__num" id="stat-study">84</span>
+          <span class="stat__label">2-hr study blocks</span>
+        </div>
+        <div class="stat">
+          <span class="stat__num" id="stat-shifts">21</span>
+          <span class="stat__label">8-hr shifts you could pick up</span>
+        </div>
+      </div>
+
+      <p class="results__warning" id="results-warning" hidden>
+        You've allocated more than 168 hours — something on your week doesn't add up.
+      </p>
+    </div>
+
+    <div class="daybars reveal" id="daybars" aria-label="Free hours by day"></div>
+
+  </section>
+
+  <section class="about reveal">
+    <p>
+      Everything runs locally in your browser — nothing you type is sent
+      anywhere or stored. Refresh and it resets.
+    </p>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <p>Built with GSAP &amp; Three.js · <a href="https://github.com/Tekkiech/timecalc" id="gh-link-footer" target="_blank" rel="noopener">View on GitHub</a></p>
+</footer>
+
+<template id="category-row-template">
+  <div class="category-card">
+    <span class="category-card__swatch"></span>
+    <span class="category-card__name"></span>
+    <div class="category-card__input-wrap">
+      <input type="number" class="category-card__input" min="0" max="168" step="0.5" inputmode="decimal" />
+      <span class="category-card__unit">hrs/wk</span>
+    </div>
+    <button class="category-card__remove" type="button" aria-label="Remove category">×</button>
+  </div>
+</template>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script type="module" src="assets/scene.js"></script>
+<script type="module" src="assets/app.js"></script>
+</body>
+</html>
