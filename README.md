@@ -6,16 +6,24 @@ work, church, commute, or any custom category, and see what's left for
 studying or picking up a shift.
 
 No build step, no framework, no backend. Everything runs client-side and
-nothing you type is stored or sent anywhere.
+saves only to your own browser's local storage — nothing is sent anywhere.
 
 ## Features
 
 - **Quick mode** — one weekly-hours input per category.
 - **Day-by-day mode** — a Mon–Sun grid per category for more accurate totals.
-- **Custom categories** — add and remove your own (gym, volunteering, etc).
+- **Edit mode** — rename, recolor, drag-to-reorder, or remove *any* category,
+  including the defaults (Sleep, School, Work, Church, Commute), add your
+  own, and edit the page's own headline, subtext, and section copy in place.
+- **Configurable insights** — set your own study-block and shift-block
+  lengths instead of the 2-hour / 8-hour defaults.
+- **Three day-breakdown views** — bar chart, pie chart, or a pictogram
+  (waffle chart), switchable any time.
 - **Live results** — an animated ring, free-hours count, average free hours
-  per day, and estimated 2-hour study blocks / 8-hour shifts you could fit.
-- **Per-day breakdown** — a bar chart of free hours for each day of the week.
+  per day, and estimated study blocks / shifts you could fit.
+- **Persistence** — every edit (categories, colors, order, copy, chart
+  choice, settings) is saved to `localStorage` automatically, with a
+  one-click "reset everything to defaults."
 - Dark, editorial visual style with GSAP scroll/entrance animations and a
   Three.js ambient background (168 points on a sphere — one per hour).
 
